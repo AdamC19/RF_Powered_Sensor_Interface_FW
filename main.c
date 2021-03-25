@@ -43,6 +43,14 @@
 
 #include "mcc_generated_files/mcc.h"
 
+/* User Includes */
+
+/* Global Variables */
+
+
+/* Function Prototypes */
+void stuff();
+
 /*
                          Main application
  */

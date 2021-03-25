@@ -24,6 +24,7 @@
         <itemPath>mcc_generated_files/pwm5.h</itemPath>
         <itemPath>mcc_generated_files/cmp2.h</itemPath>
       </logicalFolder>
+      <itemPath>ads7142.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
