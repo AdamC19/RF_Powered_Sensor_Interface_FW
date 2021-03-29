@@ -51,6 +51,9 @@
 
 #include <xc.h>
 #include "cmp2.h"
+
+#include "tmr0.h"
+#include "global.h"
 /**
   Section: CMP2 APIs
 */
@@ -84,9 +87,22 @@ bool CMP2_GetOutputStatus(void)
 
 void CMP2_ISR(void)
 {
-    // clear the CMP2 interrupt flag
-    PIR2bits.C2IF = 0;
+  if(CMP2_GetOutputStatus()){
+    // detected a rising edge
+    SET_RX_BITLINE;
+    rising_edge = TMR0_ReadTimer();
+  }else{
+      // a falling edge
+    RESET_RX_BITLINE;
+    if(edges == 0){
+        TMR0_StartTimer();
+        edges++;
+    }
+    falling_edge = TMR0_ReadTimer();
+  }
 
+  // clear the CMP2 interrupt flag
+  PIR2bits.C2IF = 0;
 }
 
 /**

@@ -44,6 +44,7 @@
 #include "mcc_generated_files/mcc.h"
 
 /* User Includes */
+#include "global.h"
 
 /* Macros */
 #define DISABLE_I2C   (PMD4 |= _PMD4_MSSP1MD_MASK)
@@ -52,9 +53,16 @@
 #define ENABLE_UART   (PMD4 &= ~_PMD4_UART1MD_MASK)
 
 /* Global Variables */
-
+uint8_t edges = 0;
+uint16_t falling_edge = 0;
+uint16_t rising_edge  = 0;
+uint8_t rx_bit_ind = 0;
+uint8_t mode = MODE_CHARGING;
+bool preamble_rcvd = false;
+bool frame_sync_rcvd = false;
 
 /* Function Prototypes */
+
 void enter_listen_mode();
 void enter_normal_mode();
 void enter_hi_perf_mode();
@@ -66,7 +74,9 @@ void main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
-
+    
+    enter_listen_mode(); // do this immediately so clocks are right and all for the interrupts
+    
     // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
     // Use the following macros to:
 
@@ -85,6 +95,19 @@ void main(void)
     while (1)
     {
         // Add your application code
+        switch(mode){
+            case MODE_CHARGING:{
+                break;
+            }case MODE_RECEIVING:{
+                break;
+            }case MODE_SAMPLING:{
+                break;
+            }case MODE_TRANSMITTING:{
+                break;
+            }default:{
+                break;
+            }
+        }
     }
 }
 
