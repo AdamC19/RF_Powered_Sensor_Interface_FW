@@ -53,7 +53,8 @@
 #include "cmp2.h"
 
 #include "tmr0.h"
-#include "global.h"
+#include "pin_manager.h"
+#include "../global.h"
 /**
   Section: CMP2 APIs
 */
@@ -87,22 +88,82 @@ bool CMP2_GetOutputStatus(void)
 
 void CMP2_ISR(void)
 {
-  if(CMP2_GetOutputStatus()){
-    // detected a rising edge
-    SET_RX_BITLINE;
-    rising_edge = TMR0_ReadTimer();
-  }else{
-      // a falling edge
-    RESET_RX_BITLINE;
-    if(edges == 0){
-        TMR0_StartTimer();
-        edges++;
-    }
-    falling_edge = TMR0_ReadTimer();
-  }
+    uint16_t this_edge = TMR0_ReadTimer();
+    if (CMP2_GetOutputStatus()) { 
+        // detected a rising edge
+        RX_BITLINE_SetHigh();
+        
+        // ==== RX RISING EDGE STATE MACHINE ====
+        switch (rx_state) {
+            case RX_WAIT_DELIM:{
+                rx_state = RX_WAIT_DATA0;
+                rising_edge = this_edge;
+                break;
+            }case RX_WAIT_DATA0:{
+                rx_state = RX_GET_RTCAL;
+                rising_edge = this_edge;
+                break;
+            }case RX_GET_RTCAL:{
+                // end of RTcal period, compute time
+                rt_cal = (uint8_t) (this_edge - rising_edge);
+                rising_edge = this_edge;
+                pivot = rt_cal >> 1; // RTcal/2
+                // frame_sync_rcvd = true; // might a TRcal symbol yet, which would mean a preamble
+                rx_state = RX_FRAME_SYNC_RCVD;
+                // TODO: maybe set TMR0 count to be 4 * RTcal plus some margin so we can detect invalid symbols?
+                break;
+            }case RX_FRAME_SYNC_RCVD:{
+                
+                uint8_t dur = (uint8_t) (this_edge - rising_edge);
+                if(dur > rt_cal){
+                    // too long, must be a TRcal period
+                    tr_cal = dur;
+                    preamble_rcvd = true;
+                }else{
+                    // this is data
+                    // if dur > pivot, bit is a 1. else bit is a 0
+                    rx_bits[rx_bit_ind] = (uint8_t)(dur > pivot);
+                    rx_bit_ind++;
+                }
+                // next state at this point will always be RX_GET_DATA
+                rx_state = RX_GET_DATA;
+                
+                break;
+            }case RX_GET_DATA:{
+                // everything now is data
+                uint8_t dur = (uint8_t) (this_edge - rising_edge);
 
-  // clear the CMP2 interrupt flag
-  PIR2bits.C2IF = 0;
+                // if dur > pivot, bit is a 1. else bit is a 0
+                rx_bits[rx_bit_ind] = (uint8_t)(dur > pivot);
+
+                rx_bit_ind++;
+                if(rx_bit_ind >= 16){
+                    // 16-bit word received
+                    word_rcvd = true;
+                    rx_word_rcvd();
+                }
+                break;
+            }
+            case RX_IDLE:
+            default:{
+                break;
+            }
+        }
+        
+    } else { 
+        // a falling edge
+        RX_BITLINE_SetLow();
+        if(rx_state == RX_IDLE){
+            TMR0_WriteTimer(0); // reset timer
+            TMR0_StartTimer();
+            rx_state = RX_WAIT_DELIM;
+        }
+    }
+
+    
+
+    // clear the CMP2 interrupt flag
+    PIR2bits.C2IF = 0;
 }
 
 /**

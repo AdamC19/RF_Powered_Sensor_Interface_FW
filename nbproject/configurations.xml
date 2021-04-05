@@ -26,6 +26,7 @@
         <itemPath>mcc_generated_files/tmr0.h</itemPath>
       </logicalFolder>
       <itemPath>ads7142.h</itemPath>
+      <itemPath>global.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -60,6 +61,7 @@
         <itemPath>mcc_generated_files/tmr0.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
+      <itemPath>global.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -68,6 +70,9 @@
       <itemPath>MyConfig.mc3</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="default" type="2">
@@ -76,10 +81,10 @@
         <targetDevice>PIC16F18346</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>noID</platformTool>
+        <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC8</languageToolchain>
         <languageToolchainVersion>2.31</languageToolchainVersion>
-        <platform>3</platform>
+        <platform>2</platform>
       </toolsSet>
       <packs>
         <pack name="PIC16F1xxxx_DFP" vendor="Microchip" version="1.5.133"/>
@@ -191,6 +196,48 @@
         <property key="program-the-device-with-default-config-words" value="true"/>
         <property key="remove-unused-sections" value="true"/>
       </HI-TECH-LINK>
+      <PICkit3PlatformTool>
+        <property key="AutoSelectMemRanges" value="auto"/>
+        <property key="Freeze Peripherals" value="true"/>
+        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
+        <property key="ToolFirmwareFilePath"
+                  value="D:\Program Files/Microchip/MPLABX/v5.45/mplab_platform/mplablibs/modules/ext/PICKIT3.jar/PK3FW_015607.jam"/>
+        <property key="ToolFirmwareOption.UseLatestFirmware" value="false"/>
+        <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="hwtoolclock.frcindebug" value="false"/>
+        <property key="memories.aux" value="false"/>
+        <property key="memories.bootflash" value="true"/>
+        <property key="memories.configurationmemory" value="true"/>
+        <property key="memories.configurationmemory2" value="true"/>
+        <property key="memories.dataflash" value="true"/>
+        <property key="memories.eeprom" value="true"/>
+        <property key="memories.flashdata" value="true"/>
+        <property key="memories.id" value="true"/>
+        <property key="memories.instruction.ram" value="true"/>
+        <property key="memories.instruction.ram.ranges"
+                  value="${memories.instruction.ram.ranges}"/>
+        <property key="memories.programmemory" value="true"/>
+        <property key="memories.programmemory.ranges" value="0-3fff"/>
+        <property key="poweroptions.powerenable" value="true"/>
+        <property key="programmertogo.imagename" value=""/>
+        <property key="programoptions.donoteraseauxmem" value="false"/>
+        <property key="programoptions.eraseb4program" value="true"/>
+        <property key="programoptions.pgmspeed" value="2"/>
+        <property key="programoptions.preservedataflash" value="false"/>
+        <property key="programoptions.preservedataflash.ranges"
+                  value="${programoptions.preservedataflash.ranges}"/>
+        <property key="programoptions.preserveeeprom" value="true"/>
+        <property key="programoptions.preserveeeprom.ranges" value="f000-f0ff"/>
+        <property key="programoptions.preserveprogram.ranges" value=""/>
+        <property key="programoptions.preserveprogramrange" value="false"/>
+        <property key="programoptions.preserveuserid" value="false"/>
+        <property key="programoptions.programcalmem" value="false"/>
+        <property key="programoptions.programuserotp" value="false"/>
+        <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
+        <property key="programoptions.usehighvoltageonmclr" value="false"/>
+        <property key="programoptions.uselvpprogramming" value="true"/>
+        <property key="voltagevalue" value="3.25"/>
+      </PICkit3PlatformTool>
       <XC8-CO>
         <property key="coverage-enable" value=""/>
       </XC8-CO>

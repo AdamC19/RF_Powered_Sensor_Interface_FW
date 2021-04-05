@@ -45,27 +45,35 @@
 
 /* User Includes */
 #include "global.h"
+#include <string.h>
 
 /* Macros */
-#define DISABLE_I2C   (PMD4 |= _PMD4_MSSP1MD_MASK)
-#define ENABLE_I2C    (PMD4 &= ~_PMD4_MSSP1MD_MASK)
-#define DISABLE_UART  (PMD4 |= _PMD4_UART1MD_MASK)
-#define ENABLE_UART   (PMD4 &= ~_PMD4_UART1MD_MASK)
 
 /* Global Variables */
-uint8_t edges = 0;
-uint16_t falling_edge = 0;
-uint16_t rising_edge  = 0;
-uint8_t rx_bit_ind = 0;
+volatile uint8_t edge = FALLING;
+volatile uint8_t rt_cal = 0;
+volatile uint8_t pivot = 0;
+volatile uint8_t tr_cal = 0;
+volatile RxStates_t rx_state = RX_IDLE;
+volatile uint8_t edges = 0;
+volatile uint16_t falling_edge = 0;
+volatile uint16_t rising_edge  = 0;
+volatile uint8_t rx_bit_ind = 0;
+volatile uint8_t rx_bits[16];
+volatile uint8_t rx_word_ind = 0;
+volatile uint16_t rx_words[16];
+volatile bool preamble_rcvd = false;
+volatile bool frame_sync_rcvd = false;
+volatile bool word_rcvd = false;
+
 uint8_t mode = MODE_CHARGING;
-bool preamble_rcvd = false;
-bool frame_sync_rcvd = false;
 
 /* Function Prototypes */
-
+void init();
 void enter_listen_mode();
 void enter_normal_mode();
 void enter_hi_perf_mode();
+void debug(uint8_t* str);
 
 /*
                          Main application
@@ -75,7 +83,7 @@ void main(void)
     // initialize the device
     SYSTEM_Initialize();
     
-    enter_listen_mode(); // do this immediately so clocks are right and all for the interrupts
+    init();
     
     // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
     // Use the following macros to:
@@ -91,7 +99,7 @@ void main(void)
 
     // Disable the Peripheral Interrupts
     //INTERRUPT_PeripheralInterruptDisable();
-
+    debug("Entering main loop\r\n");
     while (1)
     {
         // Add your application code
@@ -109,6 +117,14 @@ void main(void)
             }
         }
     }
+}
+
+void init(){
+    enter_listen_mode(); // do this immediately so clocks are right and all for the interrupts
+    mode = MODE_CHARGING;
+    
+    DISABLE_I_SINK;
+    DISABLE_I_SRC;
 }
 
 /**
@@ -177,6 +193,19 @@ void enter_hi_perf_mode(){
   ENABLE_I2C;
   ENABLE_UART;
 
+}
+
+
+void debug(uint8_t* str){
+    ENABLE_UART;
+    
+    if(EUSART_is_tx_ready()){
+        uint8_t len = (uint8_t)strlen(str);
+        for(uint8_t i = 0; i < len; i++){
+            EUSART_Write(str[i]);
+        }
+    }
+    DISABLE_UART;
 }
 
 /**
