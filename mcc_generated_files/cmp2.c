@@ -88,25 +88,24 @@ bool CMP2_GetOutputStatus(void)
 
 void CMP2_ISR(void)
 {
-    uint16_t this_edge = TMR0_ReadTimer();
+    
     if (CMP2_GetOutputStatus()) { 
         // detected a rising edge
+        uint16_t this_edge = TMR0_ReadTimer();
+        TMR0_WriteTimer(0); // reset the timer
         RX_BITLINE_SetHigh();
         
         // ==== RX RISING EDGE STATE MACHINE ====
         switch (rx_state) {
             case RX_WAIT_DELIM:{
                 rx_state = RX_WAIT_DATA0;
-                rising_edge = this_edge;
                 break;
             }case RX_WAIT_DATA0:{
                 rx_state = RX_GET_RTCAL;
-                rising_edge = this_edge;
                 break;
             }case RX_GET_RTCAL:{
                 // end of RTcal period, compute time
-                rt_cal = (uint8_t) (this_edge - rising_edge);
-                rising_edge = this_edge;
+                rt_cal = (uint8_t)this_edge;
                 pivot = rt_cal >> 1; // RTcal/2
                 // frame_sync_rcvd = true; // might a TRcal symbol yet, which would mean a preamble
                 rx_state = RX_FRAME_SYNC_RCVD;
@@ -114,7 +113,7 @@ void CMP2_ISR(void)
                 break;
             }case RX_FRAME_SYNC_RCVD:{
                 
-                uint8_t dur = (uint8_t) (this_edge - rising_edge);
+                uint8_t dur = (uint8_t)this_edge;
                 if(dur > rt_cal){
                     // too long, must be a TRcal period
                     tr_cal = dur;
@@ -131,7 +130,7 @@ void CMP2_ISR(void)
                 break;
             }case RX_GET_DATA:{
                 // everything now is data
-                uint8_t dur = (uint8_t) (this_edge - rising_edge);
+                uint8_t dur = (uint8_t)this_edge;
 
                 // if dur > pivot, bit is a 1. else bit is a 0
                 rx_bits[rx_bit_ind] = (uint8_t)(dur > pivot);

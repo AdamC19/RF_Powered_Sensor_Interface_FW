@@ -26,6 +26,7 @@ void rx_word_rcvd(){
 void reset_rx_state_machine(){
     rx_bit_ind = 0;
     rx_word_ind = 0;
+    preamble_rcvd = false;
     TMR0_StopTimer();
     TMR0_WriteTimer(0); // reset timer
     rx_state = RX_IDLE;
