@@ -65,6 +65,26 @@
 #define PULL_UP_ENABLED      1
 #define PULL_UP_DISABLED     0
 
+// get/set TX_SHUNT aliases
+#define TX_SHUNT_TRIS                 TRISAbits.TRISA2
+#define TX_SHUNT_LAT                  LATAbits.LATA2
+#define TX_SHUNT_PORT                 PORTAbits.RA2
+#define TX_SHUNT_WPU                  WPUAbits.WPUA2
+#define TX_SHUNT_OD                   ODCONAbits.ODCA2
+#define TX_SHUNT_ANS                  ANSELAbits.ANSA2
+#define TX_SHUNT_SetHigh()            do { LATAbits.LATA2 = 1; } while(0)
+#define TX_SHUNT_SetLow()             do { LATAbits.LATA2 = 0; } while(0)
+#define TX_SHUNT_Toggle()             do { LATAbits.LATA2 = ~LATAbits.LATA2; } while(0)
+#define TX_SHUNT_GetValue()           PORTAbits.RA2
+#define TX_SHUNT_SetDigitalInput()    do { TRISAbits.TRISA2 = 1; } while(0)
+#define TX_SHUNT_SetDigitalOutput()   do { TRISAbits.TRISA2 = 0; } while(0)
+#define TX_SHUNT_SetPullup()          do { WPUAbits.WPUA2 = 1; } while(0)
+#define TX_SHUNT_ResetPullup()        do { WPUAbits.WPUA2 = 0; } while(0)
+#define TX_SHUNT_SetPushPull()        do { ODCONAbits.ODCA2 = 0; } while(0)
+#define TX_SHUNT_SetOpenDrain()       do { ODCONAbits.ODCA2 = 1; } while(0)
+#define TX_SHUNT_SetAnalogMode()      do { ANSELAbits.ANSA2 = 1; } while(0)
+#define TX_SHUNT_SetDigitalMode()     do { ANSELAbits.ANSA2 = 0; } while(0)
+
 // get/set RB4 procedures
 #define RB4_SetHigh()            do { LATBbits.LATB4 = 1; } while(0)
 #define RB4_SetLow()             do { LATBbits.LATB4 = 0; } while(0)
