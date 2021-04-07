@@ -1,26 +1,24 @@
 /**
-  Generated Pin Manager File
+  CCP1 Generated Driver File
 
-  Company:
+  @Company
     Microchip Technology Inc.
 
-  File Name:
-    pin_manager.c
+  @File Name
+    ccp1.c
 
-  Summary:
-    This is the Pin Manager file generated using PIC10 / PIC12 / PIC16 / PIC18 MCUs
+  @Summary
+    This is the generated driver implementation file for the CCP1 driver using PIC10 / PIC12 / PIC16 / PIC18 MCUs
 
-  Description:
-    This header file provides implementations for pin APIs for all pins selected in the GUI.
+  @Description
+    This source file provides implementations for driver APIs for CCP1.
     Generation Information :
         Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.81.7
         Device            :  PIC16F18346
         Driver Version    :  2.11
     The generated drivers are tested against the following:
         Compiler          :  XC8 2.31 and above
-        MPLAB             :  MPLAB X 5.45
-
-    Copyright (c) 2013 - 2015 released Microchip Technology Inc.  All rights reserved.
+         MPLAB 	          :  MPLAB X 5.45
 */
 
 /*
@@ -46,82 +44,64 @@
     SOFTWARE.
 */
 
-#include "pin_manager.h"
+/**
+  Section: Included Files
+*/
 
+#include <xc.h>
+#include "ccp1.h"
 
+/**
+  Section: Compare Module APIs:
+*/
 
-
-
-void PIN_MANAGER_Initialize(void)
+void CCP1_Initialize(void)
 {
-    /**
-    LATx registers
-    */
-    LATA = 0x00;
-    LATB = 0x00;
-    LATC = 0x00;
-
-    /**
-    TRISx registers
-    */
-    TRISA = 0x37;
-    TRISB = 0x70;
-    TRISC = 0xF7;
-
-    /**
-    ANSELx registers
-    */
-    ANSELC = 0xF3;
-    ANSELB = 0x80;
-    ANSELA = 0x37;
-
-    /**
-    WPUx registers
-    */
-    WPUB = 0x00;
-    WPUA = 0x00;
-    WPUC = 0x00;
-
-    /**
-    ODx registers
-    */
-    ODCONA = 0x00;
-    ODCONB = 0x00;
-    ODCONC = 0x00;
-
-    /**
-    SLRCONx registers
-    */
-    SLRCONA = 0x37;
-    SLRCONB = 0xF0;
-    SLRCONC = 0xFF;
-
-    /**
-    INLVLx registers
-    */
-    INLVLA = 0x3F;
-    INLVLB = 0xF0;
-    INLVLC = 0xFF;
-
-
-
-
-
-   
-    
+    // Set the CCP1 to the options selected in the User Interface
 	
-    RXPPS = 0x0D;   //RB5->EUSART:RX;    
-    SSP1CLKPPS = 0x0E;   //RB6->MSSP1:SCL1;    
-    RB6PPS = 0x18;   //RB6->MSSP1:SCL1;    
-    RB7PPS = 0x14;   //RB7->EUSART:TX;    
-    RB4PPS = 0x19;   //RB4->MSSP1:SDA1;    
-    SSP1DATPPS = 0x0C;   //RB4->MSSP1:SDA1;    
-}
-  
-void PIN_MANAGER_IOC(void)
-{   
+	// CCP1MODE Toggle_cleartmr; CCP1EN enabled; CCP1FMT right_aligned; 
+	CCP1CON = 0x81;    
+	
+	// CCPR1H 0; 
+	CCPR1H = 0x00;    
+	
+	// CCPR1L 0; 
+	CCPR1L = 0x00;    
+
+	// Selecting Timer 3
+	CCPTMRSbits.C1TSEL = 0x2;
+    
+    // Clear the CCP1 interrupt flag
+    PIR4bits.CCP1IF = 0;
+
+    // Enable the CCP1 interrupt
+    PIE4bits.CCP1IE = 1;
 }
 
+void CCP1_SetCompareCount(uint16_t compareCount)
+{
+    CCP1_PERIOD_REG_T module;
+    
+    // Write the 16-bit compare value
+    module.ccpr1_16Bit = compareCount;
+    
+    CCPR1L = module.ccpr1l;
+    CCPR1H = module.ccpr1h;
+}
+
+bool CCP1_OutputStatusGet(void)
+{
+    // Returns the output status
+    return(CCP1CONbits.CCP1OUT);
+}
+
+void CCP1_CompareISR(void)
+{
+    // Clear the CCP1 interrupt flag
+    PIR4bits.CCP1IF = 0;
+    
+    // Add user code here
+}
 /**
  End of File
 */

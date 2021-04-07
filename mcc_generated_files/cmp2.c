@@ -52,7 +52,7 @@
 #include <xc.h>
 #include "cmp2.h"
 
-#include "tmr0.h"
+#include "tmr3.h"
 #include "pin_manager.h"
 #include "../global.h"
 /**
@@ -91,8 +91,8 @@ void CMP2_ISR(void)
     
     if (CMP2_GetOutputStatus()) { 
         // detected a rising edge
-        uint16_t this_edge = TMR0_ReadTimer();
-        TMR0_WriteTimer(0); // reset the timer
+        uint16_t this_edge = TMR1_ReadTimer();
+        TMR1_WriteTimer(0); // reset the timer
         RX_BITLINE_SetHigh();
         
         // ==== RX RISING EDGE STATE MACHINE ====
@@ -153,8 +153,8 @@ void CMP2_ISR(void)
         // a falling edge
         RX_BITLINE_SetLow();
         if(rx_state == RX_IDLE){
-            TMR0_WriteTimer(0); // reset timer
-            TMR0_StartTimer();
+            TMR1_WriteTimer(0); // reset timer
+            TMR1_StartTimer();
             rx_state = RX_WAIT_DELIM;
         }
     }

@@ -45,7 +45,9 @@
 
 /* User Includes */
 #include "global.h"
+#include "tag.h"
 #include <string.h>
+#include <stdlib.h>
 
 /* Macros */
 
@@ -65,6 +67,7 @@ volatile uint16_t rx_words[16];
 volatile bool preamble_rcvd = false;
 volatile bool frame_sync_rcvd = false;
 volatile bool word_rcvd = false;
+uint8_t* tag_mem;
 
 uint8_t mode = MODE_CHARGING;
 
@@ -85,6 +88,8 @@ void main(void)
     
     init();
     
+    init_tag_mem();
+    
     // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
     // Use the following macros to:
 
@@ -103,19 +108,10 @@ void main(void)
     while (1)
     {
         // Add your application code
-        switch(mode){
-            case MODE_CHARGING:{
-                break;
-            }case MODE_RECEIVING:{
-                break;
-            }case MODE_SAMPLING:{
-                break;
-            }case MODE_TRANSMITTING:{
-                break;
-            }default:{
-                break;
-            }
-        }
+        
+        
+        
+        
     }
 }
 

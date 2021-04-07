@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 #define MODE_CHARGING       0
 #define MODE_RECEIVING      1
 #define MODE_SAMPLING       2
@@ -52,6 +51,7 @@ extern volatile uint16_t rx_words[];
 extern volatile bool preamble_rcvd;
 extern volatile bool frame_sync_rcvd; // may not be needed
 extern volatile bool word_rcvd;
+extern uint8_t* tag_mem;
 
 void rx_word_rcvd();
 void reset_rx_state_machine();
