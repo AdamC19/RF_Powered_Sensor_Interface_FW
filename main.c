@@ -48,26 +48,18 @@
 #include "tag.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 /* Macros */
 
 /* Global Variables */
 volatile uint8_t edge = FALLING;
-volatile uint8_t rt_cal = 0;
-volatile uint8_t pivot = 0;
-volatile uint8_t tr_cal = 0;
-volatile RxStates_t rx_state = RX_IDLE;
 volatile uint8_t edges = 0;
 volatile uint16_t falling_edge = 0;
 volatile uint16_t rising_edge  = 0;
-volatile uint8_t rx_bit_ind = 0;
-volatile uint8_t rx_bits[16];
-volatile uint8_t rx_word_ind = 0;
-volatile uint16_t rx_words[16];
-volatile bool preamble_rcvd = false;
-volatile bool frame_sync_rcvd = false;
-volatile bool word_rcvd = false;
-uint8_t* tag_mem;
+
+volatile bool cmd_processed = false;
+
 
 uint8_t mode = MODE_CHARGING;
 
@@ -88,7 +80,7 @@ void main(void)
     
     init();
     
-    init_tag_mem();
+    init_tag_mem(tag_mem);
     
     // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
     // Use the following macros to:
@@ -109,15 +101,91 @@ void main(void)
     {
         // Add your application code
         
+        uint8_t bits_rcvd = (rx_byte_ind << 3) + (7 - rx_bit_ind);
         
+        if(preamble_rcvd){
+            // start of "inventory round"
+            // also means we should be seeing a Query command code
+            if(bits_rcvd == LEN_QUERY && (rx_bytes[0] & 0xF0) == CMD_QUERY){
+                // we have indeed received a query cmd as expected
+                handle_query_cmd(); // this function checks CRC-5, returns immediately if bad
+            }
+        }else if(frame_sync_rcvd){
+            // corresponds to all other commands
+            if((rx_bytes[0] >> 7) & 1 == 0){
+                if((rx_bytes[0] >> 6) & 1){
+                    // ACK command code
+                    if(bits_rcvd == LEN_ACK)
+                        handle_ack_cmd();
+                    
+                }else{
+                    // QueryRep code
+                    if(bits_rcvd == LEN_QUERY_REP)
+                        handle_query_rep_cmd();
+                }
+                    
+            }else if((rx_bytes[0] >> 6) & 3 == 2){
+                // ==== 4-bit command codes ====
+                switch((rx_bytes[0] >> 4) & 0x07){
+                    case CMD_QUERY_ADJUST:{
+                        if(bits_rcvd == LEN_QUERY_ADJUST)
+                            handle_query_adjust_cmd();
+                        break;
+                    }case CMD_SELECT:{
+                        handle_select_cmd();
+                        break;
+                    }
+                    case CMD_RSVD:
+                    case CMD_QUERY:
+                    default:{
+                        break;
+                    }
+                }
+            }else if((rx_bytes[0] >> 6) & 3 == 3){
+                // ==== 8-bit command codes ====
+                switch(rx_bytes[0]){
+                    case CMD_NAK:{
+                        if(bits_rcvd == LEN_NAK){
+                            handle_nak_cmd();
+                            // if we're in the Ready state, don't transition to arbitrate
+                            if(tag_state != TAG_STATE_READY && tag_state != TAG_STATE_READY_INIT)
+                                tag_state = TAG_STATE_ARBITRATE_INIT;
+                        }
+                        break;
+                    }case CMD_REQ_RN:{
+                        handle_req_rn_cmd();
+                        break;
+                    }case CMD_READ:{
+                        handle_read_cmd();
+                        break;
+                    }case CMD_WRITE:{
+                        handle_write_cmd();
+                        break;
+                    }case CMD_KILL:{
+                        handle_kill_cmd();
+                        break;
+                    }case CMD_LOCK:{
+                        handle_lock_cmd();
+                        break;
+                    }default:{
+                        break;
+                    }
+                }
+                
+            }
+        }
         
-        
+        // ==== RUN TAG-STATE STATE MACHINE ====
+        run_tag_state_machine();
+        // =====================================
     }
 }
 
 void init(){
     enter_listen_mode(); // do this immediately so clocks are right and all for the interrupts
     mode = MODE_CHARGING;
+    
+    TMR1_SetInterruptHandler(tmr1_timeout_callback);
     
     DISABLE_I_SINK;
     DISABLE_I_SRC;
@@ -133,7 +201,7 @@ void init(){
 void enter_listen_mode(){
   // disable I2C clock
   DISABLE_I2C;
-  DISABLE_UART;
+//  DISABLE_UART;
 
   // set OSCFRQ to use the internal oscillator at 16MHz
   OSCFRQ &= 0xF0; // clear
@@ -153,6 +221,12 @@ void enter_listen_mode(){
   CPUDOZE |= (3 << _CPUDOZE_DOZE_POSITION) & _CPUDOZE_DOZE_MASK; // 3 gives a ratio of 1:16
   // finally enter DOZE mode (set DOZEN bit)
   CPUDOZE |= _CPUDOZE_DOZEN_MASK;
+  
+  // set UART baud rate close to 38400 (running from the 16MHz clock)
+  // SP1BRGL 25; 
+//  SP1BRGL = 0x67;
+  // SP1BRGH 0; 
+//  SP1BRGH = 0x00;
 }
 
 
@@ -195,13 +269,19 @@ void enter_hi_perf_mode(){
 void debug(uint8_t* str){
     ENABLE_UART;
     
-    if(EUSART_is_tx_ready()){
-        uint8_t len = (uint8_t)strlen(str);
-        for(uint8_t i = 0; i < len; i++){
+    uint16_t count = 0;
+    uint8_t len = (uint8_t)strlen(str);
+    for(uint8_t i = 0; i < len; i++){
+        count = 0;
+        while(!EUSART_is_tx_ready() && count < 3000){
+            count++;
+        }
+        if(count < 3000){
             EUSART_Write(str[i]);
         }
     }
-    DISABLE_UART;
+    
+//    DISABLE_UART;
 }
 
 /**

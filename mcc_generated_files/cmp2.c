@@ -52,9 +52,12 @@
 #include <xc.h>
 #include "cmp2.h"
 
+#include "tmr1.h"
 #include "tmr3.h"
 #include "pin_manager.h"
 #include "../global.h"
+#include "../tag.h"
+
 /**
   Section: CMP2 APIs
 */
@@ -107,7 +110,6 @@ void CMP2_ISR(void)
                 // end of RTcal period, compute time
                 rt_cal = (uint8_t)this_edge;
                 pivot = rt_cal >> 1; // RTcal/2
-                // frame_sync_rcvd = true; // might a TRcal symbol yet, which would mean a preamble
                 rx_state = RX_FRAME_SYNC_RCVD;
                 // TODO: maybe set TMR0 count to be 4 * RTcal plus some margin so we can detect invalid symbols?
                 break;
@@ -119,6 +121,7 @@ void CMP2_ISR(void)
                     tr_cal = dur;
                     preamble_rcvd = true;
                 }else{
+                    frame_sync_rcvd = true; // no TRcal, so just a frame sync
                     // this is data
                     // if dur > pivot, bit is a 1. else bit is a 0
                     rx_bits[rx_bit_ind] = (uint8_t)(dur > pivot);
@@ -131,16 +134,17 @@ void CMP2_ISR(void)
             }case RX_GET_DATA:{
                 // everything now is data
                 uint8_t dur = (uint8_t)this_edge;
-
+                
                 // if dur > pivot, bit is a 1. else bit is a 0
-                rx_bits[rx_bit_ind] = (uint8_t)(dur > pivot);
-
-                rx_bit_ind++;
-                if(rx_bit_ind >= 16){
-                    // 16-bit word received
-                    word_rcvd = true;
-                    rx_word_rcvd();
+                if(dur > pivot){
+                    rx_bytes[rx_byte_ind] |= 1 << rx_bit_ind;
                 }
+                rx_bit_ind--;
+                if(rx_bit_ind < 0){
+                    rx_byte_ind++;
+                    rx_bit_ind = 7;
+                }
+                
                 break;
             }
             case RX_IDLE:
