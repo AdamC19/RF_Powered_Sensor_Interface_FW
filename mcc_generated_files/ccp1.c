@@ -50,6 +50,8 @@
 
 #include <xc.h>
 #include "ccp1.h"
+#include "pin_manager.h"
+#include "../transmit.h"
 
 /**
   Section: Compare Module APIs:
@@ -99,8 +101,64 @@ void CCP1_CompareISR(void)
 {
     // Clear the CCP1 interrupt flag
     PIR4bits.CCP1IF = 0;
-    
+    //know when to toggle to send v 
+    if (!preambledone) {
+        if(clkcnt %2 == 1) {
+            if (currentBit == 0) { //need to define nextBit in transmit.h?
+                TX_SHUNT_Toggle(); //change the value of this pin? may need to import access to pin manager?
+              //Need to move pointer      
+            }
+        }
+        else {
+            if (premAddr != 16) {
+                TX_SHUNT_Toggle();   //note: v will be encoded as a 1            
+            }
+            uint8_t cind = premAddr >> 3;
+            uint8_t shift = premAddr & 0x07;
+            currentBit = (preambleData[cind] >> (7 - shift) & 1);
+            premAddr = premAddr + 1;  
+        }
+        if (premAddr >= 18) { //done with preamble
+            preambledone = true;
+        }
+ 
+        clkcnt = clkcnt + 1
+        return;
+    }
     // Add user code here
+    //If statement checking whether to transmit next bit in memory or move to end of transmission stuff
+    //need to get working with clock cycles and all that
+    if (remainingBits != 0){ //may not need this, as I should only enter when >0
+        //transmit next bit in memory
+        if(clkcnt %2 == 1) {
+            if (currentBit == 0) { //need to define nextBit in transmit.h?
+                TX_SHUNT_Toggle(); //change the value of this pin? may need to import access to pin manager?
+              //Need to move pointer      
+            }
+        }
+        else {
+            TX_SHUNT_Toggle();
+            uint8_t cind = bitAddr >> 3;
+            uint8_t shift = bitAddr & 0x07;
+            currentBit = (transmitData[cind] >> (7 - shift) & 1);
+            bitAddr = bitAddr + 1;
+            remainingBits = remainingBits - 1;   
+        }
+    }
+    //if there is not another bit to transmit, need to send end signal/dummy bit
+    else {
+        if(!transmitdone) {
+            //do one cycle not toggling to transmit 1
+            if (clkcnt % 2 == 0) {
+                transmitdone = true;
+            }
+        }
+        else {
+            TMR3_StopTimer(); //stop timer 
+        }
+    }
+    clkcnt = clkcnt + 1;
+    
 }
 /**
  End of File
