@@ -44,6 +44,7 @@ extern volatile uint8_t bitAddr;
 extern volatile uint8_t remainingBits;
 extern volatile uint8_t clkcnt;
 extern volatile uint8_t* transmitData;
+extern volatile uint8_t preambleData[];
 extern volatile bool transmitdone;
 extern volatile bool preambledone;
 extern volatile uint8_t premAddr;

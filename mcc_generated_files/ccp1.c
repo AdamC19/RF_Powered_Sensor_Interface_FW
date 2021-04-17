@@ -122,7 +122,7 @@ void CCP1_CompareISR(void)
             preambledone = true;
         }
  
-        clkcnt = clkcnt + 1
+        clkcnt = clkcnt + 1;
         return;
     }
     // Add user code here

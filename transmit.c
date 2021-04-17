@@ -17,6 +17,7 @@ volatile uint8_t remainingBits;
 volatile uint8_t clkcnt;
 volatile uint8_t premAddr;
 volatile uint8_t* transmitData;
+volatile uint8_t preambleData[] = {0,0,0,172};
 volatile bool transmitdone = false;
 volatile bool preambledone = false;
 
