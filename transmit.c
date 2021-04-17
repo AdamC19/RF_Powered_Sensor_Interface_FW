@@ -18,7 +18,7 @@ volatile uint8_t clkcnt;
 volatile uint8_t premAddr;
 volatile uint8_t* transmitData;
 volatile bool transmitdone = false;
-volatile bool preambledone;
+volatile bool preambledone = false;
 
 
     
